@@ -62,6 +62,18 @@
         </template>
         <template v-else>
           <div class="all">
+            <div v-if="paramGroups.length" class="param-bar">
+              <div class="param-item" v-for="param in paramGroups" :key="param.key">
+                <n-text class="param-label" :depth="3">{{ param.label }}</n-text>
+                <n-select
+                  size="small"
+                  :options="param.options"
+                  v-model:value="listParams[param.key]"
+                  :consistent-menu-width="false"
+                  @update:value="handleParamChange"
+                />
+              </div>
+            </div>
             <n-list hoverable clickable style="width: 100%">
               <n-list-item
                 v-for="(item, index) in listData.data.slice(
@@ -139,15 +151,69 @@ const pageNumber = ref(
     : 1
 );
 const listData = ref(null);
+const listParams = reactive({});
+
+const paramGroups = computed(() => {
+  const params = listData.value?.params;
+  if (!params) return [];
+  return Object.entries(params)
+    .map(([key, config]) => {
+      const options = config?.type
+        ? Object.entries(config.type).map(([value, label]) => ({ value, label }))
+        : [];
+      return {
+        key,
+        label: config?.name || key,
+        options,
+      };
+    })
+    .filter((group) => group.options.length);
+});
+
+const getListItem = (name) => store.newsArr.find((item) => item.name == name);
+
+const resetListParams = (defaults = {}) => {
+  Object.keys(listParams).forEach((key) => delete listParams[key]);
+  if (defaults && typeof defaults === "object") {
+    Object.assign(listParams, defaults);
+  }
+};
+
+const syncListParams = (paramsConfig, defaults = {}) => {
+  if (!paramsConfig) {
+    resetListParams();
+    return;
+  }
+  Object.keys(listParams).forEach((key) => {
+    if (!paramsConfig[key]) delete listParams[key];
+  });
+  Object.entries(paramsConfig).forEach(([key, config]) => {
+    const options = config?.type ? Object.keys(config.type) : [];
+    if (!options.length) return;
+    const existingValue = listParams[key];
+    if (existingValue && options.includes(String(existingValue))) {
+      listParams[key] = existingValue;
+      return;
+    }
+    const defaultValue = defaults?.[key];
+    listParams[key] =
+      defaultValue && options.includes(String(defaultValue)) ? defaultValue : options[0];
+  });
+};
 
 // 获取热榜数据
-const getHotListsData = async (name, isNew = false) => {
+const getHotListsData = async (name, isNew = false, paramsOverride) => {
   listData.value = null;
-  const item = store.newsArr.find((item) => item.name == name)
-  getHotLists(item.name, isNew, item.params).then((res) => {
+  const item = getListItem(name);
+  if (!item) return;
+  const params =
+    paramsOverride ??
+    (Object.keys(listParams).length ? { ...listParams } : item.params);
+  getHotLists(item.name, isNew, params).then((res) => {
     console.log(res);
     if (res.code === 200) {
       listData.value = res;
+      syncListParams(res.params, item.params);
     } else {
       $message.error(res.message);
     }
@@ -208,14 +274,23 @@ watch(
     if (val.name === "list") {
       listType.value = val.query.type;
       pageNumber.value = Number(val.query.page);
+      const item = getListItem(listType.value);
+      resetListParams(item?.params);
       getHotListsData(listType.value);
     }
   }
 );
 
 onMounted(() => {
+  const item = getListItem(listType.value);
+  resetListParams(item?.params);
   getHotListsData(listType.value);
 });
+
+const handleParamChange = () => {
+  pageNumber.value = 1;
+  getHotListsData(listType.value, false, { ...listParams });
+};
 </script>
 
 <style lang="scss" scoped>
@@ -320,6 +395,23 @@ onMounted(() => {
       display: flex;
       flex-direction: column;
       align-items: center;
+      .param-bar {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 12px;
+      }
+      .param-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        .param-label {
+          font-size: 12px;
+        }
+      }
       .num {
         width: 24px;
         height: 24px;

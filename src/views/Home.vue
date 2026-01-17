@@ -1,34 +1,5 @@
 <template>
   <div class="home-page">
-    <!-- 页面标题区域 -->
-    <div class="page-hero" v-if="store.newsArr[0] && store.newsArr.filter((item) => item.show)[0]">
-      <div class="hero-content">
-        <h1 class="hero-title">
-          <span class="title-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-              <path d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
-            </svg>
-          </span>
-          <span class="title-text">实时热点</span>
-        </h1>
-        <p class="hero-subtitle">
-          追踪全网热门，{{ visibleCount }} 个平台实时更新
-        </p>
-      </div>
-      <div class="hero-stats">
-        <div class="stat-item">
-          <span class="stat-value">{{ visibleCount }}</span>
-          <span class="stat-label">数据源</span>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <span class="stat-value">24/7</span>
-          <span class="stat-label">实时更新</span>
-        </div>
-      </div>
-    </div>
-
     <!-- 卡片网格 -->
     <div
       class="cards-grid"
@@ -72,11 +43,6 @@ import HotList from "@/components/HotList.vue";
 
 const store = mainStore();
 
-// 计算可见的数据源数量
-const visibleCount = computed(() => {
-  return store.newsArr.filter((item) => item.show).length;
-});
-
 // 计算交错动画延迟
 const getStaggerDelay = (index) => {
   const row = Math.floor(index / 5);
@@ -112,138 +78,7 @@ const reset = () => {
   position: relative;
   z-index: 1;
   padding-bottom: 40px;
-}
-
-// 页面头部区域
-.page-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 40px;
-  padding: 32px;
-  background: rgba(20, 20, 35, 0.5);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 24px;
-  animation: heroReveal 0.6s ease forwards;
-
-  // 浅色模式
-  [data-theme="light"] & {
-    background: rgba(255, 255, 255, 0.85);
-    border-color: rgba(0, 0, 0, 0.06);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
-  }
-}
-
-@keyframes heroReveal {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.hero-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.hero-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-}
-
-.title-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, rgba(238, 90, 36, 0.2), rgba(165, 94, 234, 0.2));
-  border-radius: 12px;
-
-  svg {
-    width: 24px;
-    height: 24px;
-    color: #ff6b6b;
-  }
-}
-
-.title-text {
-  font-size: 28px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-
-  [data-theme="light"] & {
-    background: linear-gradient(135deg, #1a1a2e 0%, #3d3d5c 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-  }
-}
-
-.hero-subtitle {
-  margin: 0;
-  padding-left: 52px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.5px;
-
-  [data-theme="light"] & {
-    color: rgba(26, 26, 46, 0.5);
-  }
-}
-
-.hero-stats {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  font-family: 'Outfit', sans-serif;
-  background: linear-gradient(135deg, #ff6b6b, #a55eea);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-
-  [data-theme="light"] & {
-    color: rgba(26, 26, 46, 0.45);
-  }
-}
-
-.stat-divider {
-  width: 1px;
-  height: 40px;
-  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-
-  [data-theme="light"] & {
-    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.1), transparent);
-  }
+  padding-top: 8px;
 }
 
 // 卡片网格
@@ -379,44 +214,6 @@ const reset = () => {
 
   &:active {
     transform: translateY(0) scale(0.98);
-  }
-}
-
-// 响应式调整
-@media (max-width: 768px) {
-  .page-hero {
-    flex-direction: column;
-    gap: 24px;
-    text-align: center;
-    padding: 24px;
-  }
-
-  .hero-content {
-    align-items: center;
-  }
-
-  .hero-subtitle {
-    padding-left: 0;
-  }
-
-  .title-text {
-    font-size: 22px;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-hero {
-    padding: 20px;
-    margin-bottom: 24px;
-  }
-
-  .hero-title {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .stat-value {
-    font-size: 20px;
   }
 }
 </style>

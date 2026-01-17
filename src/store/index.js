@@ -152,6 +152,15 @@ export const mainStore = defineStore("mainData", {
           order: 23,
           show: true,
         },
+        {
+          label: "Linux.do",
+          name: "linuxdo",
+          order: 24,
+          show: true,
+          params: {
+            period: "weekly",
+          },
+        },
       ],
       newsArr: [],
       // 链接跳转方式
