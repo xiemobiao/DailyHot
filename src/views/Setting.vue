@@ -96,8 +96,21 @@
           确认将排序恢复到默认状态？
         </n-popconfirm>
       </div>
+      <!-- 区域 Tab 切换 -->
+      <div class="region-tabs-setting">
+        <n-tabs
+          v-model:value="settingRegion"
+          type="segment"
+          size="small"
+          animated
+        >
+          <n-tab name="all">全部</n-tab>
+          <n-tab name="domestic">国内</n-tab>
+          <n-tab name="international">国际</n-tab>
+        </n-tabs>
+      </div>
       <draggable
-        :list="newsArr"
+        :list="filteredNewsForSetting"
         :animation="200"
         class="mews-group"
         item-key="order"
@@ -115,6 +128,15 @@
                   <img class="logo" :src="`/logo/${element.name}.png`" alt="logo" />
                 </div>
                 <n-text class="news-name" v-html="element.label" />
+                <n-tag
+                  v-if="element.region === 'international'"
+                  size="tiny"
+                  type="info"
+                  :bordered="false"
+                  class="region-tag"
+                >
+                  国际
+                </n-tag>
               </div>
               <n-switch
                 class="switch"
@@ -152,6 +174,7 @@ import { storeToRefs } from "pinia";
 import { mainStore } from "@/store";
 import { useOsTheme } from "naive-ui";
 import draggable from "vuedraggable";
+import { ref, computed } from "vue";
 
 const store = mainStore();
 const osThemeRef = useOsTheme();
@@ -163,6 +186,17 @@ const {
   headerFixed,
   listFontSize,
 } = storeToRefs(store);
+
+// 设置页面的区域筛选
+const settingRegion = ref("all");
+
+// 根据区域筛选数据源
+const filteredNewsForSetting = computed(() => {
+  if (settingRegion.value === "all") {
+    return newsArr.value;
+  }
+  return newsArr.value.filter((item) => item.region === settingRegion.value);
+});
 
 // 深浅模式
 const themeOptions = ref([
@@ -255,6 +289,46 @@ const reset = () => {
 
       .set {
         max-width: 200px;
+      }
+    }
+
+    .region-tabs-setting {
+      margin: 16px 0;
+      display: flex;
+      justify-content: flex-start;
+
+      :deep(.n-tabs) {
+        width: auto;
+
+        .n-tabs-rail {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 8px;
+          padding: 3px;
+
+          [data-theme="light"] & {
+            background: rgba(0, 0, 0, 0.04);
+          }
+        }
+
+        .n-tabs-capsule {
+          border-radius: 6px !important;
+          background: linear-gradient(135deg, #ee5a24, #f368e0) !important;
+        }
+
+        .n-tabs-tab {
+          padding: 6px 16px !important;
+          font-size: 13px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.6);
+
+          [data-theme="light"] & {
+            color: rgba(0, 0, 0, 0.5);
+          }
+
+          &.n-tabs-tab--active {
+            color: #fff !important;
+          }
+        }
       }
     }
 
@@ -415,6 +489,14 @@ const reset = () => {
             [data-theme="light"] & {
               color: rgba(26, 26, 46, 0.75);
             }
+          }
+
+          .region-tag {
+            margin-left: 8px;
+            font-size: 10px;
+            padding: 0 6px;
+            height: 18px;
+            line-height: 18px;
           }
         }
 

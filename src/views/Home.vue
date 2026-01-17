@@ -1,13 +1,35 @@
 <template>
   <div class="home-page">
+    <!-- 区域 Tab 切换 -->
+    <div class="region-tabs-wrapper">
+      <n-tabs
+        :value="store.currentRegion"
+        @update:value="store.setRegion"
+        type="segment"
+        animated
+        size="medium"
+      >
+        <n-tab name="all">
+          <span class="tab-content">全部</span>
+        </n-tab>
+        <n-tab name="domestic">
+          <span class="tab-content">国内热榜</span>
+        </n-tab>
+        <n-tab name="international">
+          <span class="tab-content">国际热榜</span>
+        </n-tab>
+      </n-tabs>
+    </div>
+
     <!-- 卡片网格 -->
     <div
       class="cards-grid"
-      v-if="store.newsArr[0] && store.newsArr.filter((item) => item.show)[0]"
+      v-if="store.filteredNews && store.filteredNews.length > 0"
+      :key="store.currentRegion"
     >
       <div
         class="card-item"
-        v-for="(item, index) in store.newsArr.filter((item) => item.show)"
+        v-for="(item, index) in store.filteredNews"
         :key="item.name"
         :style="{
           '--delay': `${getStaggerDelay(index)}s`,
@@ -79,6 +101,76 @@ const reset = () => {
   z-index: 1;
   padding-bottom: 40px;
   padding-top: 8px;
+}
+
+// 区域 Tab 切换
+.region-tabs-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+
+  :deep(.n-tabs) {
+    width: auto;
+
+    .n-tabs-rail {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 4px;
+
+      [data-theme="light"] & {
+        background: rgba(0, 0, 0, 0.04);
+      }
+    }
+
+    .n-tabs-capsule {
+      border-radius: 8px !important;
+      background: linear-gradient(135deg, #ee5a24, #f368e0) !important;
+    }
+
+    .n-tabs-tab {
+      padding: 10px 24px !important;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+
+      [data-theme="light"] & {
+        color: rgba(0, 0, 0, 0.5);
+      }
+
+      &:hover {
+        color: rgba(255, 255, 255, 0.9);
+
+        [data-theme="light"] & {
+          color: rgba(0, 0, 0, 0.8);
+        }
+      }
+
+      &.n-tabs-tab--active {
+        color: #fff !important;
+        font-weight: 600;
+      }
+    }
+
+    .n-tabs-tab-wrapper {
+      padding: 0;
+    }
+  }
+
+  .tab-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  @media (max-width: 560px) {
+    :deep(.n-tabs) {
+      .n-tabs-tab {
+        padding: 8px 16px !important;
+        font-size: 13px;
+      }
+    }
+  }
 }
 
 // 卡片网格
