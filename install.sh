@@ -11,7 +11,12 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-INSTALL_DIR="${DAILYHOT_DIR:-/opt/dailyhot}"
+# 默认安装到 1panel 目录
+INSTALL_DIR="${DAILYHOT_DIR:-/opt/1panel/apps/dailyhot}"
+
+# 默认端口
+API_PORT="${API_PORT:-6688}"
+WEB_PORT="${WEB_PORT:-6699}"
 
 echo -e "${BLUE}"
 echo "╔═══════════════════════════════════════╗"
@@ -46,11 +51,11 @@ check_git() {
     if ! command -v git &> /dev/null; then
         echo -e "${YELLOW}正在安装 Git...${NC}"
         if command -v apt-get &> /dev/null; then
-            apt-get update && apt-get install -y git
+            apt-get update -qq && apt-get install -y -qq git
         elif command -v yum &> /dev/null; then
-            yum install -y git
+            yum install -y -q git
         elif command -v apk &> /dev/null; then
-            apk add git
+            apk add -q git
         else
             echo -e "${RED}错误: 无法自动安装 Git，请手动安装${NC}"
             exit 1
@@ -63,13 +68,10 @@ check_git() {
 setup_dir() {
     echo -e "${BLUE}安装目录: ${INSTALL_DIR}${NC}"
 
-    if [ -d "$INSTALL_DIR" ]; then
-        echo -e "${YELLOW}检测到已有安装，是否覆盖? (y/N)${NC}"
-        read -r confirm
-        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-            echo -e "${YELLOW}已取消安装${NC}"
-            exit 0
-        fi
+    if [ -d "$INSTALL_DIR" ] && [ "$(ls -A $INSTALL_DIR 2>/dev/null)" ]; then
+        echo -e "${YELLOW}检测到已有安装，将清理后重新安装...${NC}"
+        # 停止可能运行的容器
+        cd "$INSTALL_DIR" 2>/dev/null && docker compose down 2>/dev/null || true
         rm -rf "$INSTALL_DIR"
     fi
 
@@ -90,20 +92,14 @@ clone_repos() {
 
 # 生成配置文件
 generate_config() {
-    echo ""
-    echo -e "${YELLOW}请输入配置信息 (直接回车使用默认值)${NC}"
-    echo ""
-
-    read -p "API 端口 [6688]: " API_PORT
-    API_PORT=${API_PORT:-6688}
-
-    read -p "Web 端口 [6699]: " WEB_PORT
-    WEB_PORT=${WEB_PORT:-6699}
-
     # 自动获取服务器 IP
-    SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ip.sb 2>/dev/null || echo "localhost")
-    read -p "API 地址 [http://${SERVER_IP}:${API_PORT}]: " API_URL
-    API_URL=${API_URL:-http://${SERVER_IP}:${API_PORT}}
+    SERVER_IP=$(curl -s --connect-timeout 5 ifconfig.me 2>/dev/null || curl -s --connect-timeout 5 ip.sb 2>/dev/null || echo "127.0.0.1")
+    API_URL="${API_URL:-http://${SERVER_IP}:${API_PORT}}"
+
+    echo -e "${BLUE}配置信息:${NC}"
+    echo -e "  API 端口: ${API_PORT}"
+    echo -e "  Web 端口: ${WEB_PORT}"
+    echo -e "  API 地址: ${API_URL}"
 
     # 生成 docker-compose.yml
     cat > docker-compose.yml << EOF
@@ -157,25 +153,56 @@ generate_manage_script() {
 
 cd "$(dirname "$0")" || exit 1
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
 case "$1" in
-    start)   docker compose up -d ;;
-    stop)    docker compose down ;;
-    restart) docker compose restart ;;
-    status)  docker compose ps ;;
+    start)
+        echo -e "${GREEN}启动服务...${NC}"
+        docker compose up -d
+        ;;
+    stop)
+        echo -e "${YELLOW}停止服务...${NC}"
+        docker compose down
+        ;;
+    restart)
+        echo -e "${YELLOW}重启服务...${NC}"
+        docker compose restart
+        ;;
+    status)
+        echo -e "${GREEN}服务状态:${NC}"
+        docker compose ps
+        ;;
     logs)
-        if [ "$2" == "api" ]; then docker logs -f dailyhot-api
-        elif [ "$2" == "web" ]; then docker logs -f dailyhot-web
-        else docker compose logs -f
-        fi ;;
+        if [ "$2" == "api" ]; then
+            docker logs -f dailyhot-api
+        elif [ "$2" == "web" ]; then
+            docker logs -f dailyhot-web
+        else
+            docker compose logs -f
+        fi
+        ;;
     update)
+        echo -e "${GREEN}更新代码...${NC}"
         cd DailyHotApi && git pull && cd ..
         cd DailyHot && git pull && cd ..
-        docker compose build && docker compose up -d
-        echo "更新完成!" ;;
-    rebuild) docker compose build --no-cache && docker compose up -d ;;
+        echo -e "${GREEN}重新构建...${NC}"
+        docker compose build
+        docker compose up -d
+        echo -e "${GREEN}更新完成!${NC}"
+        ;;
+    rebuild)
+        echo -e "${GREEN}重新构建镜像...${NC}"
+        docker compose build --no-cache
+        docker compose up -d
+        ;;
     uninstall)
-        docker compose down -v
-        echo "服务已停止，如需完全卸载请删除目录: $(pwd)" ;;
+        echo -e "${RED}卸载服务...${NC}"
+        docker compose down -v --rmi local
+        echo -e "${YELLOW}服务已停止，如需完全卸载请删除目录: $(pwd)${NC}"
+        ;;
     *)
         echo "DailyHot 管理脚本"
         echo ""
@@ -189,34 +216,58 @@ case "$1" in
         echo "  logs      查看日志 (logs api / logs web)"
         echo "  update    更新并重启"
         echo "  rebuild   重新构建"
-        echo "  uninstall 卸载服务" ;;
+        echo "  uninstall 卸载服务"
+        ;;
 esac
 EOF
     chmod +x manage.sh
+    echo -e "${GREEN}✓ 管理脚本生成完成${NC}"
 }
 
 # 构建并启动
 build_and_start() {
     echo ""
-    echo -e "${BLUE}正在构建镜像，请稍候...${NC}"
-    docker compose build
+    echo -e "${BLUE}════════════════════════════════════════${NC}"
+    echo -e "${BLUE}  正在构建 Docker 镜像，请稍候...${NC}"
+    echo -e "${BLUE}  (首次构建需要几分钟)${NC}"
+    echo -e "${BLUE}════════════════════════════════════════${NC}"
+    echo ""
 
+    # 构建镜像
+    docker compose build --progress=plain 2>&1 | while read line; do
+        echo "$line"
+    done
+
+    if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        echo -e "${RED}构建失败，请检查错误信息${NC}"
+        exit 1
+    fi
+
+    echo ""
     echo -e "${BLUE}正在启动服务...${NC}"
     docker compose up -d
 
-    echo -e "${GREEN}✓ 服务启动成功${NC}"
+    # 等待服务启动
+    sleep 3
+
+    # 检查服务状态
+    if docker compose ps | grep -q "running"; then
+        echo -e "${GREEN}✓ 服务启动成功${NC}"
+    else
+        echo -e "${RED}服务启动可能有问题，请检查日志: docker compose logs${NC}"
+    fi
 }
 
 # 显示完成信息
 show_success() {
     echo ""
-    echo -e "${GREEN}╔═══════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║         安装完成!                     ║${NC}"
-    echo -e "${GREEN}╚═══════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}╔═══════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║            安装完成!                          ║${NC}"
+    echo -e "${GREEN}╚═══════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "  ${BLUE}访问地址:${NC}"
-    echo -e "    前端: http://${SERVER_IP}:${WEB_PORT}"
-    echo -e "    API:  http://${SERVER_IP}:${API_PORT}"
+    echo -e "    前端: ${GREEN}http://${SERVER_IP}:${WEB_PORT}${NC}"
+    echo -e "    API:  ${GREEN}http://${SERVER_IP}:${API_PORT}${NC}"
     echo ""
     echo -e "  ${BLUE}管理命令:${NC}"
     echo -e "    cd ${INSTALL_DIR}"
@@ -224,8 +275,9 @@ show_success() {
     echo -e "    ./manage.sh stop     # 停止"
     echo -e "    ./manage.sh logs     # 日志"
     echo -e "    ./manage.sh update   # 更新"
+    echo -e "    ./manage.sh status   # 状态"
     echo ""
-    echo -e "  ${YELLOW}提示: 如需配置域名访问，请设置 Nginx 反向代理${NC}"
+    echo -e "  ${YELLOW}提示: 如需配置域名访问，请设置 Nginx/OpenResty 反向代理${NC}"
     echo ""
 }
 
