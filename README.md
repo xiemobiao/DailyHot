@@ -6,6 +6,14 @@
 <img src="./screenshots/main.jpg" style="border-radius: 16px" />
 </div>
 
+## 一键安装
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/xiemobiao/DailyHot/master/install.sh | bash
+```
+
+> 自定义安装目录: `DAILYHOT_DIR=/your/path curl -fsSL ... | bash`
+
 ## 功能特性
 
 - 🔥 聚合 60+ 热门平台数据源
@@ -44,13 +52,19 @@ pnpm build
 
 ## Docker 部署
 
+### 一键安装（推荐）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/xiemobiao/DailyHot/master/install.sh | bash
+```
+
 ### 环境要求
 
 - Docker 20.10+
 - Docker Compose 2.0+
 - Git
 
-### 快速部署
+### 手动部署
 
 1. 克隆前后端仓库：
 
