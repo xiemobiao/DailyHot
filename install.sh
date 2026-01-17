@@ -188,8 +188,8 @@ case "$1" in
         echo -e "${GREEN}更新代码...${NC}"
         cd DailyHotApi && git pull && cd ..
         cd DailyHot && git pull && cd ..
-        echo -e "${GREEN}重新构建...${NC}"
-        docker compose build
+        echo -e "${GREEN}重新构建（清除缓存）...${NC}"
+        docker compose build --no-cache
         docker compose up -d
         echo -e "${GREEN}更新完成!${NC}"
         ;;
