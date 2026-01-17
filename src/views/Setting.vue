@@ -104,22 +104,26 @@
         @end="saveSoreData()"
       >
         <template #item="{ element }">
-          <n-card
+          <div
             class="item"
-            embedded
-            :content-style="{ display: 'flex', alignItems: 'center' }"
+            :class="{ active: element.show }"
           >
-            <div class="desc" :style="{ opacity: element.show ? null : 0.6 }">
-              <img class="logo" :src="`/logo/${element.name}.png`" alt="logo" />
-              <n-text class="news-name" v-html="element.label" />
+            <div class="item-glow"></div>
+            <div class="item-content">
+              <div class="desc">
+                <div class="logo-wrapper">
+                  <img class="logo" :src="`/logo/${element.name}.png`" alt="logo" />
+                </div>
+                <n-text class="news-name" v-html="element.label" />
+              </div>
+              <n-switch
+                class="switch"
+                :round="false"
+                v-model:value="element.show"
+                @update:value="saveSoreData(element.label, element.show)"
+              />
             </div>
-            <n-switch
-              class="switch"
-              :round="false"
-              v-model:value="element.show"
-              @update:value="saveSoreData(element.label, element.show)"
-            />
-          </n-card>
+          </div>
         </template>
       </draggable>
     </n-card>
@@ -277,29 +281,168 @@ const reset = () => {
       }
 
       .item {
+        position: relative;
         cursor: pointer;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+
+        [data-theme="light"] & {
+          background: rgba(0, 0, 0, 0.02);
+          border-color: rgba(0, 0, 0, 0.06);
+        }
+
+        &:hover {
+          border-color: rgba(238, 90, 36, 0.2);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        // 选中状态
+        &.active {
+          background: linear-gradient(135deg, rgba(238, 90, 36, 0.08) 0%, rgba(165, 94, 234, 0.06) 100%);
+          border-color: rgba(238, 90, 36, 0.25);
+          box-shadow:
+            0 4px 16px rgba(238, 90, 36, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+          [data-theme="light"] & {
+            background: linear-gradient(135deg, rgba(238, 90, 36, 0.06) 0%, rgba(165, 94, 234, 0.04) 100%);
+            border-color: rgba(238, 90, 36, 0.2);
+            box-shadow:
+              0 4px 16px rgba(238, 90, 36, 0.08),
+              inset 0 1px 0 rgba(255, 255, 255, 0.5);
+          }
+
+          .item-glow {
+            opacity: 1;
+          }
+
+          .logo-wrapper {
+            background: linear-gradient(135deg, rgba(238, 90, 36, 0.15), rgba(165, 94, 234, 0.15));
+
+            &::after {
+              opacity: 1;
+            }
+          }
+
+          .news-name {
+            color: #fff;
+
+            [data-theme="light"] & {
+              color: #1a1a2e;
+            }
+          }
+        }
+
+        // 未选中状态
+        &:not(.active) {
+          .desc {
+            opacity: 0.6;
+          }
+        }
+
+        .item-glow {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(238, 90, 36, 0.5), rgba(165, 94, 234, 0.5), transparent);
+          opacity: 0;
+          transition: opacity 0.35s ease;
+        }
+
+        .item-content {
+          display: flex;
+          align-items: center;
+          padding: 16px;
+        }
 
         .desc {
           display: flex;
           align-items: center;
           width: 100%;
-          transition: all 0.3s;
+          transition: all 0.3s ease;
 
-          .logo {
+          .logo-wrapper {
+            position: relative;
             width: 40px;
             height: 40px;
             margin-right: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+
+            [data-theme="light"] & {
+              background: rgba(0, 0, 0, 0.03);
+            }
+
+            &::after {
+              content: '';
+              position: absolute;
+              inset: -2px;
+              border-radius: 12px;
+              padding: 1px;
+              background: linear-gradient(135deg, rgba(238, 90, 36, 0.5), rgba(165, 94, 234, 0.5));
+              -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+              mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+              -webkit-mask-composite: xor;
+              mask-composite: exclude;
+              opacity: 0;
+              transition: opacity 0.3s ease;
+            }
+          }
+
+          .logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            transition: transform 0.3s ease;
           }
 
           .news-name {
-            font-size: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.75);
+            transition: color 0.3s ease;
+
+            [data-theme="light"] & {
+              color: rgba(26, 26, 46, 0.75);
+            }
           }
         }
 
         .switch {
           margin-left: auto;
+          flex-shrink: 0;
         }
       }
+    }
+  }
+}
+
+// 全局开关样式覆盖
+.mews-group {
+  :deep(.n-switch) {
+    .n-switch__rail {
+      background-color: rgba(120, 120, 130, 0.3) !important;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  :deep(.n-switch.n-switch--active) {
+    .n-switch__rail {
+      background: linear-gradient(135deg, #ee5a24, #f39c12) !important;
+      box-shadow:
+        0 2px 12px rgba(238, 90, 36, 0.5),
+        0 0 20px rgba(238, 90, 36, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
     }
   }
 }
