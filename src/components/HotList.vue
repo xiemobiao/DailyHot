@@ -1,138 +1,115 @@
 <template>
-  <n-card
-    :header-style="{ padding: '16px' }"
-    :content-style="{ padding: '0 16px' }"
-    :footer-style="{ padding: '16px' }"
+  <div
+    class="hot-card-wrapper"
     :id="`hot-list-${hotData.name}`"
-    class="hot-list"
-    hoverable
-    @click="toList"
+    @mouseenter="handleMouseEnter"
+    @mouseleave="handleMouseLeave"
+    @mousemove="handleMouseMove"
   >
-    <template #header>
-      <n-space class="title" justify="space-between">
-        <div class="name">
-          <n-avatar
-            class="ico"
-            :src="`/logo/${hotData.name}.png`"
-            fallback-src="/ico/icon_error.png"
-          />
-          <n-text class="name-text">{{ hotData.label }}</n-text>
-        </div>
-        <n-text v-if="hotListData?.type" class="subtitle" :depth="2">
-          {{ hotListData.type }}
-        </n-text>
-        <n-skeleton v-else width="60px" text round />
-      </n-space>
-    </template>
-    <n-scrollbar class="news-list" ref="scrollbarRef">
-      <Transition name="fade" mode="out-in">
-        <div v-if="loadingError" class="error">
-          <n-result
-            size="small"
-            status="500"
-            title="哎呀，加载失败了"
-            description="生活总会遇到不如意的事情"
-            style="margin-top: 40px"
-          />
-          <n-button
-            size="small"
-            secondary
-            strong
-            round
-            @click.stop="getHotListsData(hotData.name)"
-          >
-            <template #icon>
-              <n-icon :component="Refresh" />
-            </template>
-            重试
-          </n-button>
-        </div>
-        <div v-else-if="!hotListData || listLoading" class="loading">
-          <n-skeleton text round :repeat="10" height="20px" />
-        </div>
-        <div v-else class="lists" :id="hotData.name + 'Lists'">
-          <div
-            class="item"
-            v-for="(item, index) in hotListData.data.slice(0, 15)"
-            :key="item"
-          >
-            <n-text
-              class="num"
-              :class="
-                index === 0
-                  ? 'one'
-                  : index === 1
-                  ? 'two'
-                  : index === 2
-                  ? 'three'
-                  : null
-              "
-              :depth="2"
-              >{{ index + 1 }}</n-text
-            >
-            <n-text
-              :style="{ fontSize: store.listFontSize + 'px' }"
-              class="text"
-              @click.stop="jumpLink(item)"
-            >
-              {{ item.title }}
-            </n-text>
+    <!-- 发光边框 -->
+    <div class="card-glow" :style="glowStyle"></div>
+
+    <!-- 卡片主体 -->
+    <div class="hot-card" :style="cardStyle" @click="toList">
+      <!-- 卡片内部光晕 -->
+      <div class="card-shine" :style="shineStyle"></div>
+
+      <!-- 头部 -->
+      <header class="card-header">
+        <div class="source-info">
+          <div class="source-icon-wrapper">
+            <n-avatar
+              class="source-icon"
+              :src="`/logo/${hotData.name}.png`"
+              fallback-src="/ico/icon_error.png"
+            />
+            <div class="icon-ring"></div>
           </div>
+          <span class="source-name">{{ hotData.label }}</span>
         </div>
-      </Transition>
-    </n-scrollbar>
-    <template #footer>
-      <Transition name="fade" mode="out-in">
-        <template v-if="!hotListData">
-          <div class="loading">
-            <n-skeleton text round />
+        <div class="source-type" v-if="hotListData?.type">
+          <span>{{ hotListData.type }}</span>
+        </div>
+        <div class="source-type skeleton" v-else></div>
+      </header>
+
+      <!-- 内容区域 -->
+      <div class="card-content">
+        <n-scrollbar class="news-scrollbar" ref="scrollbarRef">
+          <Transition name="fade" mode="out-in">
+            <!-- 错误状态 -->
+            <div v-if="loadingError" class="state-error">
+              <div class="error-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p class="error-text">加载失败了</p>
+              <button class="retry-btn" @click.stop="getHotListsData(hotData.name)">
+                <n-icon :component="Refresh" :size="14" />
+                <span>重试</span>
+              </button>
+            </div>
+
+            <!-- 加载状态 -->
+            <div v-else-if="!hotListData || listLoading" class="state-loading">
+              <div class="skeleton-item" v-for="i in 10" :key="i" :style="{ animationDelay: `${i * 0.05}s` }"></div>
+            </div>
+
+            <!-- 列表内容 -->
+            <div v-else class="news-list" :id="hotData.name + 'Lists'">
+              <div
+                class="news-item"
+                v-for="(item, index) in hotListData.data.slice(0, 15)"
+                :key="item"
+                :style="{ animationDelay: `${index * 0.03}s` }"
+                @click.stop="jumpLink(item)"
+              >
+                <span
+                  class="item-rank"
+                  :class="{
+                    'rank-1': index === 0,
+                    'rank-2': index === 1,
+                    'rank-3': index === 2
+                  }"
+                >
+                  {{ index + 1 }}
+                </span>
+                <span class="item-title" :style="{ fontSize: store.listFontSize + 'px' }">
+                  {{ item.title }}
+                </span>
+                <div class="item-hover-line"></div>
+              </div>
+            </div>
+          </Transition>
+        </n-scrollbar>
+      </div>
+
+      <!-- 底部 -->
+      <footer class="card-footer">
+        <Transition name="fade" mode="out-in">
+          <div v-if="!hotListData" class="footer-loading">
+            <div class="skeleton-line"></div>
           </div>
-        </template>
-        <template v-else>
-          <div class="message">
-            <n-text class="time" :depth="3" v-if="updateTime">
-              {{ updateTime }}
-            </n-text>
-            <n-text class="time" :depth="3" v-else> 获取失败 </n-text>
-            <n-space class="controls">
-              <n-popover v-if="hotListData.data.length > 15">
-                <template #trigger>
-                  <n-button
-                    size="tiny"
-                    secondary
-                    strong
-                    round
-                    @click.stop="toList"
-                  >
-                    <template #icon>
-                      <n-icon :component="More" />
-                    </template>
-                  </n-button>
-                </template>
-                查看更多
-              </n-popover>
-              <n-popover>
-                <template #trigger>
-                  <n-button
-                    size="tiny"
-                    secondary
-                    strong
-                    round
-                    @click.stop="getNewData"
-                  >
-                    <template #icon>
-                      <n-icon :component="Refresh" />
-                    </template>
-                  </n-button>
-                </template>
-                获取最新
-              </n-popover>
-            </n-space>
+          <div v-else class="footer-content">
+            <span class="update-time">{{ updateTime || '获取中...' }}</span>
+            <div class="footer-actions">
+              <button
+                v-if="hotListData.data.length > 15"
+                class="action-btn"
+                @click.stop="toList"
+              >
+                <n-icon :component="More" :size="16" />
+              </button>
+              <button class="action-btn refresh" @click.stop="getNewData">
+                <n-icon :component="Refresh" :size="16" />
+              </button>
+            </div>
           </div>
-        </template>
-      </Transition>
-    </template>
-  </n-card>
+        </Transition>
+      </footer>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -145,39 +122,86 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 const store = mainStore();
 const props = defineProps({
-  // 热榜数据
   hotData: {
     type: Object,
-    default: {},
+    default: () => ({}),
   },
 });
 
-// 更新时间
+// 状态
 const updateTime = ref(null);
-
-// 刷新按钮数据
-const lastClickTime = ref(
-  localStorage.getItem(`${props.hotData.name}Btn`) || 0
-);
-
-// 热榜数据
+const lastClickTime = ref(localStorage.getItem(`${props.hotData.name}Btn`) || 0);
 const hotListData = ref(null);
 const scrollbarRef = ref(null);
 const listLoading = ref(false);
 const loadingError = ref(false);
 
+// 3D 效果状态
+const isHovering = ref(false);
+const mouseX = ref(0);
+const mouseY = ref(0);
+const cardRef = ref(null);
+
+// 计算卡片 3D 变换样式
+const cardStyle = computed(() => {
+  if (!isHovering.value) {
+    return {
+      transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)',
+    };
+  }
+  const rotateX = (mouseY.value - 0.5) * -10;
+  const rotateY = (mouseX.value - 0.5) * 10;
+  return {
+    transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`,
+  };
+});
+
+// 光晕位置样式
+const glowStyle = computed(() => {
+  if (!isHovering.value) {
+    return { opacity: 0 };
+  }
+  return {
+    opacity: 1,
+    background: `radial-gradient(600px circle at ${mouseX.value * 100}% ${mouseY.value * 100}%, rgba(238, 90, 36, 0.15), transparent 40%)`,
+  };
+});
+
+// 光泽效果样式
+const shineStyle = computed(() => {
+  if (!isHovering.value) {
+    return { opacity: 0 };
+  }
+  return {
+    opacity: 1,
+    background: `radial-gradient(400px circle at ${mouseX.value * 100}% ${mouseY.value * 100}%, rgba(255, 255, 255, 0.1), transparent 40%)`,
+  };
+});
+
+// 鼠标事件处理
+const handleMouseEnter = () => {
+  isHovering.value = true;
+};
+
+const handleMouseLeave = () => {
+  isHovering.value = false;
+};
+
+const handleMouseMove = (e) => {
+  const rect = e.currentTarget.getBoundingClientRect();
+  mouseX.value = (e.clientX - rect.left) / rect.width;
+  mouseY.value = (e.clientY - rect.top) / rect.height;
+};
+
 // 获取热榜数据
 const getHotListsData = async (name, isNew = false) => {
   try {
-    // hotListData.value = null;
     loadingError.value = false;
     const item = store.newsArr.find((item) => item.name == name);
     const result = await getHotLists(item.name, isNew, item.params);
-    // console.log(result);
     if (result.code === 200) {
       listLoading.value = false;
       hotListData.value = result;
-      // 滚动至顶部
       if (scrollbarRef.value) {
         scrollbarRef.value.scrollTo({ position: "top", behavior: "smooth" });
       }
@@ -195,14 +219,11 @@ const getHotListsData = async (name, isNew = false) => {
 const getNewData = () => {
   const now = Date.now();
   if (now - lastClickTime.value > 60000) {
-    // 点击事件
     listLoading.value = true;
     getHotListsData(props.hotData.name, true);
-    // 更新最后一次点击时间
     lastClickTime.value = now;
     localStorage.setItem(`${props.hotData.name}Btn`, now);
   } else {
-    // 不执行点击事件
     $message.info("请稍后再刷新");
   }
 };
@@ -223,9 +244,7 @@ const toList = () => {
   if (props.hotData.name) {
     router.push({
       path: "/list",
-      query: {
-        type: props.hotData.name,
-      },
+      query: { type: props.hotData.name },
     });
   } else {
     $message.error("数据出错，请重试");
@@ -249,7 +268,7 @@ const checkListShow = () => {
   observer.observe(listDom);
 };
 
-// 实时改变更新时间
+// 监听时间变化更新
 watch(
   () => store.timeData,
   () => {
@@ -265,166 +284,453 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.hot-list {
-  border-radius: 12px;
-  transition: all 0.3s;
+.hot-card-wrapper {
+  position: relative;
+  border-radius: 20px;
+}
+
+// 外发光效果
+.card-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: 21px;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+}
+
+// 卡片主体
+.hot-card {
+  position: relative;
+  background: rgba(20, 20, 35, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 20px;
   cursor: pointer;
-  .title {
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    height: 26px;
-    .name {
-      display: flex;
-      align-items: center;
-      .n-avatar {
-        background-color: transparent;
-        width: 20px;
-        height: 20px;
-        margin-right: 8px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+  will-change: transform;
+  overflow: hidden;
+
+  &:hover {
+    border-color: rgba(238, 90, 36, 0.3);
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.3),
+      0 0 60px rgba(238, 90, 36, 0.1);
+  }
+
+  // 浅色模式
+  [data-theme="light"] & {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+
+    &:hover {
+      border-color: rgba(238, 90, 36, 0.2);
+      box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.1),
+        0 0 40px rgba(238, 90, 36, 0.05);
+    }
+  }
+}
+
+// 卡片内光泽
+.card-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  z-index: 1;
+}
+
+// 头部
+.card-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.source-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.source-icon-wrapper {
+  position: relative;
+}
+
+.source-icon {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 8px;
+  background: transparent;
+  transition: transform 0.3s ease;
+
+  .hot-card:hover & {
+    transform: scale(1.1) rotate(5deg);
+  }
+}
+
+.icon-ring {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(238, 90, 36, 0.5), rgba(165, 94, 234, 0.5)) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  .hot-card:hover & {
+    opacity: 1;
+  }
+}
+
+.source-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5px;
+
+  [data-theme="light"] & {
+    color: #1a1a2e;
+  }
+}
+
+.source-type {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+
+  [data-theme="light"] & {
+    color: rgba(26, 26, 46, 0.6);
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  &.skeleton {
+    width: 50px;
+    height: 22px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+
+    [data-theme="light"] & {
+      background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+      background-size: 200% 100%;
+    }
+  }
+}
+
+// 内容区域
+.card-content {
+  position: relative;
+  z-index: 2;
+  height: 320px;
+}
+
+.news-scrollbar {
+  height: 100%;
+
+  :deep(.n-scrollbar-rail) {
+    right: -8px;
+    width: 4px;
+  }
+
+  :deep(.n-scrollbar-rail__scrollbar) {
+    background: linear-gradient(180deg, rgba(238, 90, 36, 0.5), rgba(165, 94, 234, 0.5));
+    border-radius: 2px;
+  }
+}
+
+// 加载状态
+.state-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.skeleton-item {
+  height: 28px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// 错误状态
+.state-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.error-icon {
+  width: 48px;
+  height: 48px;
+  color: rgba(238, 90, 36, 0.6);
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.error-text {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+.retry-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(238, 90, 36, 0.2), rgba(165, 94, 234, 0.2));
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(238, 90, 36, 0.3), rgba(165, 94, 234, 0.3));
+    transform: translateY(-2px);
+  }
+}
+
+// 新闻列表
+.news-list {
+  padding-right: 8px;
+}
+
+.news-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: itemReveal 0.4s ease forwards;
+  opacity: 0;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateX(4px);
+
+    .item-title {
+      color: #fff;
+
+      [data-theme="light"] & {
+        color: #1a1a2e;
       }
     }
 
-    .subtitle {
-      margin-left: auto;
-      font-size: 12px;
+    .item-hover-line {
+      width: 100%;
     }
   }
 
-  .message {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    font-size: 12px;
-    height: 24px;
-
-    .time {
-      padding: 0 6px;
+  // 浅色模式悬停背景
+  [data-theme="light"] & {
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
     }
   }
 
-  :deep(.news-list) {
-    height: 300px;
+  &:active {
+    transform: translateX(4px) scale(0.99);
+  }
+}
 
-    .n-scrollbar-rail {
-      right: 0;
-    }
+@keyframes itemReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-    .error {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      .n-button {
-        margin-top: 12px;
-      }
-    }
+.item-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  transition: all 0.3s ease;
 
-    .loading {
-      display: flex;
-      flex-direction: column;
-      height: 300px;
-      justify-content: space-between;
+  [data-theme="light"] & {
+    color: rgba(26, 26, 46, 0.5);
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  &.rank-1 {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(238, 90, 36, 0.3);
+  }
+
+  &.rank-2 {
+    background: linear-gradient(135deg, #ff9f43, #f368e0);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255, 159, 67, 0.3);
+  }
+
+  &.rank-3 {
+    background: linear-gradient(135deg, #a55eea, #00d2d3);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(165, 94, 234, 0.3);
+  }
+}
+
+.item-title {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: color 0.3s ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  [data-theme="light"] & {
+    color: rgba(26, 26, 46, 0.75);
+  }
+}
+
+.item-hover-line {
+  position: absolute;
+  bottom: 0;
+  left: 44px;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(238, 90, 36, 0.6), rgba(165, 94, 234, 0.6));
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+// 底部
+.card-footer {
+  position: relative;
+  z-index: 2;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.footer-loading {
+  .skeleton-line {
+    height: 20px;
+    width: 100px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.update-time {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.5px;
+
+  [data-theme="light"] & {
+    color: rgba(26, 26, 46, 0.45);
+  }
+}
+
+.footer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  [data-theme="light"] & {
+    background: rgba(0, 0, 0, 0.04);
+    color: rgba(26, 26, 46, 0.5);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.08);
+      color: #1a1a2e;
     }
   }
 
-  .lists {
-    padding-right: 6px;
-
-    .item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 6px;
-      padding-bottom: 2px;
-      min-height: 30px;
-      border-radius: 8px;
-      transition: all 0.3s;
-      cursor: pointer;
-
-      &:nth-last-of-type(1) {
-        margin-bottom: 0;
-      }
-
-      .num {
-        width: 24px;
-        height: 24px;
-        min-width: 24px;
-        margin-right: 8px;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: var(--n-border-color);
-        border-radius: 8px;
-        transition: all 0.3s;
-
-        &:hover {
-          background-color: var(--n-close-color-hover);
-        }
-
-        &.one {
-          background-color: #ea444d;
-          color: #fff;
-        }
-
-        &.two {
-          background-color: #ed702d;
-          color: #fff;
-        }
-
-        &.three {
-          background-color: #eead3f;
-          color: #fff;
-        }
-      }
-
-      .text {
-        position: relative;
-        display: inline-block;
-        width: 100%;
-        transition: all 0.3s;
-
-        @media (min-width: 768px) {
-          &:hover {
-            transform: translateX(4px);
-
-            &::after {
-              width: 90%;
-            }
-          }
-        }
-
-        @media (max-width: 768px) {
-          &:active {
-            color: #ea444d;
-          }
-        }
-
-        &::after {
-          content: "";
-          width: 0;
-          height: 2px;
-          max-height: 2px;
-          background-color: var(--n-close-color-pressed);
-          position: absolute;
-          left: 0;
-          bottom: -2px;
-          border-radius: 8px;
-          transition: all 0.3s;
-        }
-      }
-    }
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: translateY(-2px);
   }
 
-  :deep(.n-card-header) {
-    .loading {
-      height: 26px;
-    }
+  &:active {
+    transform: translateY(0) scale(0.95);
   }
 
-  :deep(.n-card__footer) {
-    .loading {
-      height: 24px;
-    }
+  &.refresh:hover {
+    background: linear-gradient(135deg, rgba(238, 90, 36, 0.2), rgba(165, 94, 234, 0.2));
   }
+}
+
+// 过渡动画
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
