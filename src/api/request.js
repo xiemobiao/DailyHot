@@ -1,16 +1,23 @@
 import axios from "axios";
 
-switch (process.env.NODE_ENV) {
-  case "production":
-    axios.defaults.baseURL = import.meta.env.VITE_GLOBAL_API;
-    break;
-  case "development":
-    axios.defaults.baseURL = import.meta.env.VITE_GLOBAL_API;
-    break;
-  default:
-    axios.defaults.baseURL = import.meta.env.VITE_GLOBAL_API;
-    break;
-}
+const normalizeBaseURL = (baseURL) => {
+  if (typeof baseURL !== "string") return baseURL;
+
+  if (baseURL.startsWith("https://api-hot.imsyy.top")) {
+    return baseURL.replace("https://", "http://");
+  }
+
+  return baseURL;
+};
+
+const getBaseURL = () => {
+  if (import.meta.env.DEV) return "/api";
+
+  const envBaseURL = import.meta.env.VITE_GLOBAL_API;
+  return normalizeBaseURL(envBaseURL);
+};
+
+axios.defaults.baseURL = getBaseURL();
 
 axios.defaults.timeout = 30000;
 axios.defaults.headers = { "Content-Type": "application/json" };
@@ -63,7 +70,7 @@ axios.interceptors.response.use(
           break;
       }
     } else {
-      $message.error(data.message ? data.message : "请求失败，请稍后重试");
+      $message.error(error?.message ? error.message : "请求失败，请稍后重试");
     }
     return Promise.reject(error);
   }

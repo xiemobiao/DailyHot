@@ -7,8 +7,15 @@ import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd());
+  const defaultLocalApi = "http://127.0.0.1:6688";
+  const envApi = env["VITE_GLOBAL_API"];
+  const isOldHostedApi =
+    typeof envApi === "string" && envApi.includes("api-hot.imsyy.top");
+  const devProxyTarget = isOldHostedApi || !envApi ? defaultLocalApi : envApi;
+
   return {
-    base: loadEnv(mode, process.cwd())["VITE_DIR"],
+    base: env["VITE_DIR"],
     plugins: [
       vue(),
       AutoImport({
@@ -75,6 +82,13 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 6699,
+      proxy: {
+        "/api": {
+          target: devProxyTarget,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ""),
+        },
+      },
     },
     build: {
       minify: "terser",
