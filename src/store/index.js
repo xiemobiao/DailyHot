@@ -256,6 +256,15 @@ export const mainStore = defineStore("mainData", {
       timeData: null,
       // 字体大小
       listFontSize: 16,
+      // AI 功能相关
+      aiEnabled: true, // AI 功能总开关
+      aiFeatures: {
+        summary: true, // AI 摘要
+        sentiment: true, // 情感分析
+        category: true, // 智能分类
+      },
+      aiCache: {}, // AI 分析结果缓存 { 'source:id': result }
+      aiLoading: {}, // AI 加载状态 { 'source:id': true/false }
     };
   },
   getters: {
@@ -275,6 +284,23 @@ export const mainStore = defineStore("mainData", {
     // 获取国际数据源
     internationalNews: (state) => {
       return state.newsArr.filter((item) => item.region === "international");
+    },
+    // 获取启用的 AI 功能列表
+    enabledAiFeatures: (state) => {
+      if (!state.aiEnabled) return [];
+      return Object.entries(state.aiFeatures)
+        .filter(([, enabled]) => enabled)
+        .map(([feature]) => feature);
+    },
+    // 获取 AI 缓存数据
+    getAiCache: (state) => (source, id) => {
+      const key = `${source}:${id}`;
+      return state.aiCache[key] || null;
+    },
+    // 获取 AI 加载状态
+    getAiLoading: (state) => (source, id) => {
+      const key = `${source}:${id}`;
+      return state.aiLoading[key] || false;
     },
   },
   actions: {
@@ -323,6 +349,30 @@ export const mainStore = defineStore("mainData", {
         this.newsArr = this.defaultNewsArr;
       }
     },
+    // AI 功能开关
+    setAiEnabled(enabled) {
+      this.aiEnabled = enabled;
+    },
+    // 设置 AI 子功能
+    setAiFeature(feature, enabled) {
+      if (this.aiFeatures.hasOwnProperty(feature)) {
+        this.aiFeatures[feature] = enabled;
+      }
+    },
+    // 设置 AI 加载状态
+    setAiLoading(source, id, loading) {
+      const key = `${source}:${id}`;
+      this.aiLoading[key] = loading;
+    },
+    // 缓存 AI 分析结果
+    cacheAiResult(source, id, result) {
+      const key = `${source}:${id}`;
+      this.aiCache[key] = result;
+    },
+    // 清除 AI 缓存
+    clearAiCache() {
+      this.aiCache = {};
+    },
   },
   persist: [
     {
@@ -335,6 +385,8 @@ export const mainStore = defineStore("mainData", {
         "headerFixed",
         "listFontSize",
         "currentRegion",
+        "aiEnabled",
+        "aiFeatures",
       ],
     },
   ],

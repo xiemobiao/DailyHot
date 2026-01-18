@@ -149,6 +149,52 @@
         </template>
       </draggable>
     </n-card>
+    <n-h6 prefix="bar"> AI 功能设置 </n-h6>
+    <n-card class="set-item">
+      <div class="top">
+        <div class="name">
+          <n-text class="text">AI 智能分析</n-text>
+          <n-text class="tip" :depth="3">
+            开启后可获取热点内容的 AI 摘要、情感分析等
+          </n-text>
+        </div>
+        <n-switch v-model:value="aiEnabled" :round="false" />
+      </div>
+    </n-card>
+    <n-card class="set-item" v-if="aiEnabled">
+      <div class="top" style="flex-direction: column; align-items: flex-start">
+        <div class="name" style="width: 100%">
+          <n-text class="text">AI 功能选项</n-text>
+          <n-text class="tip" :depth="3">
+            选择需要启用的 AI 分析功能
+          </n-text>
+        </div>
+        <div class="ai-features">
+          <n-checkbox v-model:checked="aiFeatures.summary">
+            AI 摘要
+          </n-checkbox>
+          <n-checkbox v-model:checked="aiFeatures.sentiment">
+            情感分析
+          </n-checkbox>
+          <n-checkbox v-model:checked="aiFeatures.category">
+            智能分类
+          </n-checkbox>
+        </div>
+      </div>
+    </n-card>
+    <n-card class="set-item" v-if="aiEnabled">
+      <div class="top">
+        <div class="name">
+          <n-text class="text">清除 AI 缓存</n-text>
+          <n-text class="tip" :depth="3">
+            清除本地存储的 AI 分析结果
+          </n-text>
+        </div>
+        <n-button size="small" @click="clearAiCache">
+          清除缓存
+        </n-button>
+      </div>
+    </n-card>
     <n-h6 prefix="bar"> 杂项设置 </n-h6>
     <n-card class="set-item">
       <div class="top">
@@ -185,6 +231,8 @@ const {
   linkOpenType,
   headerFixed,
   listFontSize,
+  aiEnabled,
+  aiFeatures,
 } = storeToRefs(store);
 
 // 设置页面的区域筛选
@@ -249,6 +297,12 @@ const reset = () => {
   localStorage.clear();
   location.reload();
 };
+
+// 清除 AI 缓存
+const clearAiCache = () => {
+  store.clearAiCache();
+  $message.success("AI 分析缓存已清除");
+};
 </script>
 
 <style lang="scss" scoped>
@@ -289,6 +343,21 @@ const reset = () => {
 
       .set {
         max-width: 200px;
+      }
+    }
+
+    .ai-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      width: 100%;
+
+      [data-theme="light"] & {
+        background: rgba(0, 0, 0, 0.02);
       }
     }
 

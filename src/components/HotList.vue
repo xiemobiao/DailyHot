@@ -78,6 +78,14 @@
                 <span class="item-title" :style="{ fontSize: store.listFontSize + 'px' }">
                   {{ item.title }}
                 </span>
+                <AiButton
+                  v-if="store.aiEnabled"
+                  :source="hotData.name"
+                  :item-id="item.id"
+                  :loading="store.getAiLoading(hotData.name, item.id)"
+                  @click="handleAiClick(item)"
+                  class="item-ai-btn"
+                />
                 <div class="item-hover-line"></div>
               </div>
             </div>
@@ -109,6 +117,14 @@
         </Transition>
       </footer>
     </div>
+
+    <!-- AI 分析面板 -->
+    <AiPanel
+      v-model:show="showAiPanel"
+      :item="selectedAiItem"
+      :source="hotData.name"
+      :title="`AI 分析 - ${selectedAiItem?.title?.slice(0, 20) || ''}...`"
+    />
   </div>
 </template>
 
@@ -118,6 +134,8 @@ import { getHotLists } from "@/api";
 import { formatTime } from "@/utils/getTime";
 import { mainStore } from "@/store";
 import { useRouter } from "vue-router";
+import AiButton from "@/components/AiButton.vue";
+import AiPanel from "@/components/AiPanel.vue";
 
 const router = useRouter();
 const store = mainStore();
@@ -135,6 +153,10 @@ const hotListData = ref(null);
 const scrollbarRef = ref(null);
 const listLoading = ref(false);
 const loadingError = ref(false);
+
+// AI 相关状态
+const showAiPanel = ref(false);
+const selectedAiItem = ref(null);
 
 // 3D 效果状态
 const isHovering = ref(false);
@@ -237,6 +259,16 @@ const jumpLink = (data) => {
   } else if (store.linkOpenType === "href") {
     window.location.href = url;
   }
+};
+
+// AI 分析
+const handleAiClick = (item) => {
+  if (!store.aiEnabled) {
+    $message.info("请先在设置中开启 AI 功能");
+    return;
+  }
+  selectedAiItem.value = item;
+  showAiPanel.value = true;
 };
 
 // 前往全部列表
@@ -630,6 +662,15 @@ onMounted(() => {
 
   [data-theme="light"] & {
     color: rgba(26, 26, 46, 0.75);
+  }
+}
+
+.item-ai-btn {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  .news-item:hover & {
+    opacity: 1;
   }
 }
 

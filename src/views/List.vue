@@ -114,6 +114,14 @@
                     <n-icon :depth="3" :component="Fire" />
                     <n-text class="hot-text" :depth="3" v-html="item.hot" />
                   </div>
+                  <AiButton
+                    v-if="store.aiEnabled"
+                    :source="listType"
+                    :item-id="item.id"
+                    :loading="store.getAiLoading(listType, item.id)"
+                    @click.stop="handleAiClick(item)"
+                    class="ai-btn"
+                  />
                 </div>
               </n-list-item>
             </n-list>
@@ -128,6 +136,14 @@
         </template>
       </Transition>
     </n-card>
+
+    <!-- AI 分析面板 -->
+    <AiPanel
+      v-model:show="showAiPanel"
+      :item="selectedAiItem"
+      :source="listType"
+      :title="`AI 分析 - ${selectedAiItem?.title?.slice(0, 20) || ''}...`"
+    />
   </div>
 </template>
 
@@ -137,6 +153,8 @@ import { mainStore } from "@/store";
 import { useRouter } from "vue-router";
 import { formatTime } from "@/utils/getTime";
 import { getHotLists } from "@/api";
+import AiButton from "@/components/AiButton.vue";
+import AiPanel from "@/components/AiPanel.vue";
 
 const router = useRouter();
 const store = mainStore();
@@ -152,6 +170,20 @@ const pageNumber = ref(
 );
 const listData = ref(null);
 const listParams = reactive({});
+
+// AI 相关状态
+const showAiPanel = ref(false);
+const selectedAiItem = ref(null);
+
+// AI 按钮点击
+const handleAiClick = (item) => {
+  if (!store.aiEnabled) {
+    $message.info("请先在设置中开启 AI 功能");
+    return;
+  }
+  selectedAiItem.value = item;
+  showAiPanel.value = true;
+};
 
 const paramGroups = computed(() => {
   const params = listData.value?.params;
@@ -459,6 +491,7 @@ const handleParamChange = () => {
         display: flex;
         align-items: center;
         margin-top: 12px;
+        gap: 12px;
         .hot {
           display: flex;
           align-items: center;
@@ -467,6 +500,9 @@ const handleParamChange = () => {
             margin-left: 4px;
             line-height: 0;
           }
+        }
+        .ai-btn {
+          margin-left: auto;
         }
       }
       .pagination {
