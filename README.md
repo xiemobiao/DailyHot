@@ -3,7 +3,7 @@
 <h2>今日热榜</h2>
 <p>汇聚全网热点，热门尽览无余</p>
 <br />
-<img src="./screenshots/main.jpg" style="border-radius: 16px" />
+<img src="./screenshots/main.png" style="border-radius: 16px" />
 </div>
 
 ## 一键安装
