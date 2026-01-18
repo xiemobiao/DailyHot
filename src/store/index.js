@@ -265,6 +265,9 @@ export const mainStore = defineStore("mainData", {
       },
       aiCache: {}, // AI 分析结果缓存 { 'source:id': result }
       aiLoading: {}, // AI 加载状态 { 'source:id': true/false }
+      // 用户相关
+      user: null, // 当前用户信息
+      token: null, // JWT token
     };
   },
   getters: {
@@ -302,6 +305,8 @@ export const mainStore = defineStore("mainData", {
       const key = `${source}:${id}`;
       return state.aiLoading[key] || false;
     },
+    // 是否已登录
+    isLoggedIn: (state) => !!state.token && !!state.user,
   },
   actions: {
     // 设置区域筛选
@@ -373,6 +378,31 @@ export const mainStore = defineStore("mainData", {
     clearAiCache() {
       this.aiCache = {};
     },
+    // 设置用户信息
+    setUser(user) {
+      this.user = user;
+    },
+    // 设置 token
+    setToken(token) {
+      this.token = token;
+      // 同步到 localStorage（供 axios 拦截器使用）
+      if (token) {
+        localStorage.setItem("token", token);
+      } else {
+        localStorage.removeItem("token");
+      }
+    },
+    // 登录成功后设置用户和 token
+    loginSuccess(token, user) {
+      this.setToken(token);
+      this.setUser(user);
+    },
+    // 登出
+    logout() {
+      this.token = null;
+      this.user = null;
+      localStorage.removeItem("token");
+    },
   },
   persist: [
     {
@@ -387,6 +417,8 @@ export const mainStore = defineStore("mainData", {
         "currentRegion",
         "aiEnabled",
         "aiFeatures",
+        "token",
+        "user",
       ],
     },
   ],

@@ -176,29 +176,30 @@ const reset = () => {
 // 卡片网格
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 24px;
 
   @media (max-width: 1500px) {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   @media (max-width: 1100px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   @media (max-width: 800px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
   }
 
   @media (max-width: 560px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .card-item {
   opacity: 0;
+  min-width: 0; // 防止内容溢出导致宽度变化
   animation: cardReveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   animation-delay: var(--delay);
 }

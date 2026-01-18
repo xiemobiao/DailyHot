@@ -28,7 +28,7 @@ axios.interceptors.request.use(
     // if (request.loadingBar != "Hidden") $loadingBar.start();
     const token = localStorage.getItem("token");
     if (token) {
-      request.headers.Authorization = token;
+      request.headers.Authorization = `Bearer ${token}`;
     }
     return request;
   },
@@ -52,6 +52,8 @@ axios.interceptors.response.use(
       switch (error.response.status) {
         case 401:
           $message.error(data.message ? data.message : "请登录后使用");
+          // 清除本地 token
+          localStorage.removeItem("token");
           break;
         case 301:
           $message.error(data.message ? data.message : "请求路径发生跳转");

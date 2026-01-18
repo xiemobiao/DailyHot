@@ -65,7 +65,7 @@
 
         <!-- 控制按钮区域 -->
         <div class="controls-area">
-          <n-space :size="8" justify="end">
+          <n-space :size="8" justify="end" align="center">
             <!-- 刷新按钮 -->
             <n-tooltip v-if="showRefresh" placement="bottom">
               <template #trigger>
@@ -98,6 +98,9 @@
               </template>
               全局设置
             </n-tooltip>
+
+            <!-- 用户头像/登录 -->
+            <UserAvatar />
           </n-space>
         </div>
 
@@ -127,11 +130,13 @@ import {
   Refresh,
   SettingTwo,
   HamburgerButton,
+  User,
 } from "@icon-park/vue-next";
 import { getCurrentTime } from "@/utils/getTime.js";
 import { mainStore } from "@/store";
 import { NText, NIcon } from "naive-ui";
 import { useRouter } from "vue-router";
+import UserAvatar from "@/components/UserAvatar.vue";
 
 const router = useRouter();
 const store = mainStore();
@@ -188,48 +193,80 @@ const timeRender = () => {
 };
 
 // 移动端菜单
-const menuOptions = [
-  {
-    key: "header",
-    type: "render",
-    render: timeRender,
-  },
-  {
-    key: "header-divider",
+const menuOptions = computed(() => {
+  const options = [
+    {
+      key: "header",
+      type: "render",
+      render: timeRender,
+    },
+    {
+      key: "header-divider",
+      type: "divider",
+    },
+    {
+      label: "刷新页面",
+      key: "refresh",
+      icon: () => {
+        return h(NIcon, null, {
+          default: () => h(Refresh),
+        });
+      },
+    },
+    {
+      label: () => {
+        return h(NText, null, {
+          default: () => (store.siteTheme === "light" ? "深色模式" : "浅色模式"),
+        });
+      },
+      key: "changeTheme",
+      icon: () => {
+        return h(NIcon, null, {
+          default: () => (store.siteTheme === "light" ? h(Moon) : h(SunOne)),
+        });
+      },
+    },
+    {
+      label: "全局设置",
+      key: "setting",
+      icon: () => {
+        return h(NIcon, null, {
+          default: () => h(SettingTwo),
+        });
+      },
+    },
+  ];
+
+  // 添加用户相关菜单
+  options.push({
+    key: "user-divider",
     type: "divider",
-  },
-  {
-    label: "刷新页面",
-    key: "refresh",
-    icon: () => {
-      return h(NIcon, null, {
-        default: () => h(Refresh),
-      });
-    },
-  },
-  {
-    label: () => {
-      return h(NText, null, {
-        default: () => (store.siteTheme === "light" ? "深色模式" : "浅色模式"),
-      });
-    },
-    key: "changeTheme",
-    icon: () => {
-      return h(NIcon, null, {
-        default: () => (store.siteTheme === "light" ? h(Moon) : h(SunOne)),
-      });
-    },
-  },
-  {
-    label: "全局设置",
-    key: "setting",
-    icon: () => {
-      return h(NIcon, null, {
-        default: () => h(SettingTwo),
-      });
-    },
-  },
-];
+  });
+
+  if (store.isLoggedIn) {
+    options.push({
+      label: store.user?.nickname || store.user?.email || "个人中心",
+      key: "profile",
+      icon: () => {
+        return h(NIcon, null, {
+          default: () => h(User),
+        });
+      },
+    });
+  } else {
+    options.push({
+      label: "登录 / 注册",
+      key: "login",
+      icon: () => {
+        return h(NIcon, null, {
+          default: () => h(User),
+        });
+      },
+    });
+  }
+
+  return options;
+});
 
 // 移动端下拉菜单点击事件
 const menuOptionsSelect = (val) => {
@@ -239,6 +276,10 @@ const menuOptionsSelect = (val) => {
     store.setSiteTheme(store.siteTheme === "light" ? "dark" : "light");
   } else if (val === "setting") {
     router.push("/setting");
+  } else if (val === "login") {
+    router.push("/login");
+  } else if (val === "profile") {
+    router.push("/profile");
   }
 };
 

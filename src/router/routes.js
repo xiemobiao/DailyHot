@@ -62,6 +62,33 @@ const routes = [
     },
     component: () => import("@/views/500.vue"),
   },
+  // 登录页
+  {
+    path: "/login",
+    name: "login",
+    meta: {
+      title: "登录",
+    },
+    component: () => import("@/views/Login.vue"),
+  },
+  // 注册页
+  {
+    path: "/register",
+    name: "register",
+    meta: {
+      title: "注册",
+    },
+    component: () => import("@/views/Register.vue"),
+  },
+  // 个人资料页
+  {
+    path: "/profile",
+    name: "profile",
+    meta: {
+      title: "个人中心",
+    },
+    component: () => import("@/views/Profile.vue"),
+  },
   {
     path: "/:pathMatch(.*)",
     redirect: "/404",
