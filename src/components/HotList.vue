@@ -27,10 +27,27 @@
           </div>
           <span class="source-name">{{ hotData.label }}</span>
         </div>
-        <div class="source-type" v-if="hotListData?.type">
-          <span>{{ hotListData.type }}</span>
+        <div class="header-actions">
+          <!-- 翻译按钮 - 仅国际热榜显示 -->
+          <n-tooltip v-if="isInternational && store.aiEnabled" placement="bottom">
+            <template #trigger>
+              <button
+                class="translate-btn"
+                :class="{ active: showTranslated, loading: isTranslating }"
+                @click.stop="handleTranslate"
+                :disabled="isTranslating"
+              >
+                <n-icon v-if="isTranslating" :component="Loading" :size="14" class="spin" />
+                <n-icon v-else :component="Translate" :size="14" />
+              </button>
+            </template>
+            {{ showTranslated ? '显示原文' : '翻译为中文' }}
+          </n-tooltip>
+          <div class="source-type" v-if="hotListData?.type">
+            <span>{{ hotListData.type }}</span>
+          </div>
+          <div class="source-type skeleton" v-else></div>
         </div>
-        <div class="source-type skeleton" v-else></div>
       </header>
 
       <!-- 内容区域 -->
@@ -76,7 +93,7 @@
                   {{ index + 1 }}
                 </span>
                 <span class="item-title" :style="{ fontSize: store.listFontSize + 'px' }">
-                  {{ item.title }}
+                  {{ getDisplayTitle(item, index) }}
                 </span>
                 <AiButton
                   v-if="store.aiEnabled"
@@ -129,8 +146,9 @@
 </template>
 
 <script setup>
-import { Refresh, More } from "@icon-park/vue-next";
+import { Refresh, More, Translate, Loading } from "@icon-park/vue-next";
 import { getHotLists } from "@/api";
+import { batchTranslate } from "@/api/translate";
 import { formatTime } from "@/utils/getTime";
 import { mainStore } from "@/store";
 import { useRouter } from "vue-router";
@@ -157,6 +175,17 @@ const loadingError = ref(false);
 // AI 相关状态
 const showAiPanel = ref(false);
 const selectedAiItem = ref(null);
+
+// 翻译相关状态
+const isTranslating = ref(false);
+const showTranslated = ref(false);
+const translatedTitles = ref(new Map()); // 存储翻译结果 index -> translated
+
+// 判断是否为国际热榜
+const isInternational = computed(() => {
+  const newsItem = store.newsArr.find((item) => item.name === props.hotData.name);
+  return newsItem?.region === "international";
+});
 
 // 3D 效果状态
 const isHovering = ref(false);
@@ -269,6 +298,49 @@ const handleAiClick = (item) => {
   }
   selectedAiItem.value = item;
   showAiPanel.value = true;
+};
+
+// 获取显示的标题（原文或译文）
+const getDisplayTitle = (item, index) => {
+  if (showTranslated.value && translatedTitles.value.has(index)) {
+    return translatedTitles.value.get(index);
+  }
+  return item.title;
+};
+
+// 处理翻译
+const handleTranslate = async () => {
+  // 如果已翻译，切换显示状态
+  if (translatedTitles.value.size > 0) {
+    showTranslated.value = !showTranslated.value;
+    return;
+  }
+
+  // 开始翻译
+  if (!hotListData.value?.data || isTranslating.value) return;
+
+  isTranslating.value = true;
+
+  try {
+    const titles = hotListData.value.data.slice(0, 15).map((item) => item.title);
+    const result = await batchTranslate(titles, props.hotData.name);
+
+    if (result.code === 200 && result.data) {
+      // 存储翻译结果
+      result.data.forEach((item, index) => {
+        translatedTitles.value.set(index, item.translated);
+      });
+      showTranslated.value = true;
+      $message.success("翻译完成");
+    } else {
+      $message.error(result.message || "翻译失败");
+    }
+  } catch (error) {
+    console.error("Translation error:", error);
+    $message.error("翻译服务暂不可用");
+  } finally {
+    isTranslating.value = false;
+  }
 };
 
 // 前往全部列表
@@ -437,6 +509,68 @@ onMounted(() => {
 
   [data-theme="light"] & {
     color: #1a1a2e;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.translate-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  [data-theme="light"] & {
+    background: rgba(0, 0, 0, 0.04);
+    color: rgba(26, 26, 46, 0.5);
+  }
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(0, 210, 211, 0.2), rgba(165, 94, 234, 0.2));
+    color: #fff;
+    transform: scale(1.1);
+
+    [data-theme="light"] & {
+      color: #1a1a2e;
+    }
+  }
+
+  &.active {
+    background: linear-gradient(135deg, rgba(0, 210, 211, 0.3), rgba(165, 94, 234, 0.3));
+    color: #00d2d3;
+
+    [data-theme="light"] & {
+      color: #00a8a9;
+    }
+  }
+
+  &.loading {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

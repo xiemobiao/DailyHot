@@ -209,6 +209,17 @@ server {
 - 前端：https://github.com/xiemobiao/DailyHot
 - 后端：https://github.com/xiemobiao/DailyHotApi
 
+## 致谢
+
+本项目基于 [imsyy/DailyHot](https://github.com/imsyy/DailyHot) 和 [imsyy/DailyHotApi](https://github.com/imsyy/DailyHotApi) 进行二次开发，感谢原作者 [@imsyy](https://github.com/imsyy) 的开源贡献。
+
+### 本 Fork 新增功能
+
+- 🤖 AI 智能分析 - 热点摘要、情感分析、分类标签
+- 🌐 国际热榜翻译 - 一键翻译为中文
+- 👤 用户系统 - 注册登录、个人中心
+- 🎨 UI 优化 - 霓虹玻璃态设计风格
+
 ## License
 
 MIT
