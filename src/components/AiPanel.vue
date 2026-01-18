@@ -35,7 +35,7 @@
       <!-- 情感分析 -->
       <section v-if="analysis.sentiment" class="ai-section">
         <div class="section-header">
-          <n-icon :component="Emotion" :size="18" />
+          <n-icon :component="EmotionHappy" :size="18" />
           <h4>舆论倾向</h4>
         </div>
         <div class="sentiment-wrapper">
@@ -104,7 +104,7 @@
           分析时间：{{ formatTime(analysis.updateTime) }}
         </span>
         <span v-if="analysis?.fromCache" class="cache-badge">
-          <n-icon :component="Database" :size="12" />
+          <n-icon :component="Data" :size="12" />
           缓存
         </span>
         <n-button
@@ -129,11 +129,11 @@ import {
   Robot,
   Refresh,
   FileText,
-  Emotion,
+  EmotionHappy,
   Tag,
   Key,
   CloseOne,
-  Database,
+  Data,
 } from "@icon-park/vue-next";
 import { analyzeItem } from "@/api/ai";
 import { mainStore } from "@/store";
